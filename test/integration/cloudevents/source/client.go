@@ -3,6 +3,9 @@ package source
 import (
 	"context"
 	"fmt"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/source/codec"
+	workstore "open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/store"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -12,9 +15,6 @@ import (
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic/options"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic/types"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/source/codec"
-	workstore "open-cluster-management.io/sdk-go/pkg/cloudevents/work/store"
 	"open-cluster-management.io/sdk-go/test/integration/cloudevents/store"
 )
 

@@ -3,6 +3,11 @@ package cloudevents
 import (
 	"context"
 	"fmt"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work"
+	agentcodec "open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/agent/codec"
+	sourcecodec "open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/source/codec"
+	workstore "open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/store"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/utils"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -18,11 +23,6 @@ import (
 
 	workv1 "open-cluster-management.io/api/work/v1"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic/options/mqtt"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work"
-	agentcodec "open-cluster-management.io/sdk-go/pkg/cloudevents/work/agent/codec"
-	sourcecodec "open-cluster-management.io/sdk-go/pkg/cloudevents/work/source/codec"
-	workstore "open-cluster-management.io/sdk-go/pkg/cloudevents/work/store"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/utils"
 	"open-cluster-management.io/sdk-go/test/integration/cloudevents/agent"
 	"open-cluster-management.io/sdk-go/test/integration/cloudevents/util"
 )

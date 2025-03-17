@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/payload"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cloudeventstypes "github.com/cloudevents/sdk-go/v2/types"
@@ -11,7 +12,6 @@ import (
 
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic/types"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/payload"
 	"open-cluster-management.io/sdk-go/test/integration/cloudevents/store"
 )
 

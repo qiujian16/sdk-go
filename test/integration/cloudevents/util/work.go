@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/common"
 	"strconv"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -16,7 +17,6 @@ import (
 
 	workv1client "open-cluster-management.io/api/client/work/clientset/versioned/typed/work/v1"
 	workv1 "open-cluster-management.io/api/work/v1"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/common"
 )
 
 var WorkCreatedCondition = metav1.Condition{Type: "Created", Status: metav1.ConditionTrue}

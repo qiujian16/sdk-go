@@ -6,6 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/agent/codec"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/payload"
+	workstore "open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/store"
 	"time"
 
 	confluentkafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -27,10 +31,6 @@ import (
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic/options/kafka"
 	kafkaoptions "open-cluster-management.io/sdk-go/pkg/cloudevents/generic/options/kafka"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic/types"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/agent/codec"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/payload"
-	workstore "open-cluster-management.io/sdk-go/pkg/cloudevents/work/store"
 	"open-cluster-management.io/sdk-go/test/integration/cloudevents/source"
 	"open-cluster-management.io/sdk-go/test/integration/cloudevents/store"
 )

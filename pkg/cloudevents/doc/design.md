@@ -5,7 +5,7 @@
 There two types of client implementations in the `cloudevents` directory.
 
 - In `generic` directory, there are two clients [`CloudEventSourceClient`](../generic/sourceclient.go) and [`CloudEventAgentClient`](../generic/agentclient.go), they implement the [`CloudEventsClient`](../generic/interface.go) interface to resync/publish/subscribe [`ResourceObject`](../generic/interface.go) between sources and agents with cloudevents.
-- In `work` directory, there are two clients [`ManifestWorkSourceClient`](../work/source/client/manifestwork.go) and [`ManifestWorkAgentClient`](../work/agent/client/manifestwork.go), they are based on [`CloudEventSourceClient`](../generic/sourceclient.go) and [`CloudEventAgentClient`](../generic/agentclient.go) to implement the [`ManifestWorkInterface`](https://github.com/open-cluster-management-io/api/blob/main/client/work/clientset/versioned/typed/work/v1/manifestwork.go#L24), these clients are used for applying `ManifestWork` and retrieving `ManifestWork` status between source and work agent.
+- In `work` directory, there are two clients [`ManifestWorkSourceClient`](../clients/work/source/client/manifestwork.go) and [`ManifestWorkAgentClient`](../clients/work/agent/client/manifestwork.go), they are based on [`CloudEventSourceClient`](../generic/sourceclient.go) and [`CloudEventAgentClient`](../generic/agentclient.go) to implement the [`ManifestWorkInterface`](https://github.com/open-cluster-management-io/api/blob/main/client/work/clientset/versioned/typed/work/v1/manifestwork.go#L24), these clients are used for applying `ManifestWork` and retrieving `ManifestWork` status between source and work agent.
 
 ## Generic CloudEvents Clients
 
@@ -177,7 +177,7 @@ Note right of Agent: sync the resource
 
 ## ManifestWork CloudEvents Clients
 
-There are two clients [`ManifestWorkSourceClient`](../work/source/client/manifestwork.go) and [`ManifestWorkAgentClient`](../work/agent/client/manifestwork.go), both of them implement the [`ManifestWorkInterface`](https://github.com/open-cluster-management-io/api/blob/main/client/work/clientset/versioned/typed/work/v1/manifestwork.go#L24).
+There are two clients [`ManifestWorkSourceClient`](../clients/work/source/client/manifestwork.go) and [`ManifestWorkAgentClient`](../clients/work/agent/client/manifestwork.go), both of them implement the [`ManifestWorkInterface`](https://github.com/open-cluster-management-io/api/blob/main/client/work/clientset/versioned/typed/work/v1/manifestwork.go#L24).
 
 ```mermaid
 classDiagram
@@ -191,29 +191,29 @@ ManifestWorkInterface <|.. ManifestWorkSourceClient
 
 ### ManifestWorkSourceClient
 
-The `ManifestWorkSourceClient` is used for source part, it depends on [`CloudEventSourceClient`](../generic/sourceclient.go) and [`WorkClientWatcherStore`](../work/store/interface.go).
+The `ManifestWorkSourceClient` is used for source part, it depends on [`CloudEventSourceClient`](../generic/sourceclient.go) and [`WorkClientWatcherStore`](../clients/work/store/interface.go).
 
 The `ManifestWorkSourceClient` uses `CloudEventSourceClient` to 
 - publish the manifestworks and status resync request from a source to the agent
 - subscribe to the agent to receive the manifestworks status
 
 For source part, there are two `WorkClientWatcherStore` implementations
-- [`SourceLocalWatcherStore`](../work/store/local.go), this store has a local cache as its store and callback [`ListLocalWorksFunc`](../work/store/local.go) to initialize its store when creating this store, the `ManifestWorkSourceClient` use this store to
+- [`SourceLocalWatcherStore`](../clients/work/store/local.go), this store has a local cache as its store and callback [`ListLocalWorksFunc`](../clients/work/store/local.go) to initialize its store when creating this store, the `ManifestWorkSourceClient` use this store to
   - get/list manifestworks from the local store
   - add/update/delete the manifestworks with the local store
-  - get a [`watcher`](../work/store/base.go) that is provided by this store
+  - get a [`watcher`](../clients/work/store/base.go) that is provided by this store
   - handle the manifestworks status received from agent and send the received manifestworks status to the watcher
-- [`SourceInformerWatcherStore`](../work/store/informer.go), this store uses a given `ManifestWorkInformer`'s store as its store, the `ManifestWorkSourceClient` use this store to
+- [`SourceInformerWatcherStore`](../clients/work/store/informer.go), this store uses a given `ManifestWorkInformer`'s store as its store, the `ManifestWorkSourceClient` use this store to
   - get/list manifestworks from the given informer store
   - add/update/delete the manifestworks with the given informer store
-  - get a [`watcher`](../work/store/base.go) that is provided by this store
+  - get a [`watcher`](../clients/work/store/base.go) that is provided by this store
   - handle the manifestworks status received from agent and send the received manifestworks status to the watcher
 
 **Note**: It is recommended to use a `SourceInformerWatcherStore` building a `ManifestWorkSourceClient` against an informer and use `SourceLocalWatcherStore` building a `ManifestWorkSourceClient` that does not depend on an informer. If using a `ManifestWorkSourceClient` with `SourceLocalWatcherStore` to build an informer, there will be two caches for manifestworks, it will increase memory usage.
 
-Both of these two stores are extended from [`baseSourceStore`](../work/store/base.go), the `baseSourceStore` implements the `HandleReceivedWork`, when the `ManifestWorkSourceClient` starts, it subscribe to broker(agent) with this handler function. When the `ManifestWorkSourceClient` received the manifestworks status from agent, it callback this handler to handle the manifestworks status update.
+Both of these two stores are extended from [`baseSourceStore`](../clients/work/store/base.go), the `baseSourceStore` implements the `HandleReceivedWork`, when the `ManifestWorkSourceClient` starts, it subscribe to broker(agent) with this handler function. When the `ManifestWorkSourceClient` received the manifestworks status from agent, it callback this handler to handle the manifestworks status update.
 
-The `baseSourceStore` is also extended from [`baseStore`](../work/store/base.go) that implements the `Get`, `List`and `ListAll` to get/list manifestworks from the store.
+The `baseSourceStore` is also extended from [`baseStore`](../clients/work/store/base.go) that implements the `Get`, `List`and `ListAll` to get/list manifestworks from the store.
 
 ```mermaid
 classDiagram
@@ -244,16 +244,16 @@ baseSourceStore<|--SourceInformerWatcherStore
 
 ### ManifestWorkAgentClient
 
-The `ManifestWorkAgentClient` depends on [`CloudEventAgentClient`](../generic/agentclient.go) and [`WorkClientWatcherStore`](../work/store/interface.go).
+The `ManifestWorkAgentClient` depends on [`CloudEventAgentClient`](../generic/agentclient.go) and [`WorkClientWatcherStore`](../clients/work/store/interface.go).
 
 The `ManifestWorkAgentClient` use `CloudEventAgentClient` to
 - publish the manifestworks status and spec resync request from agent to source
 - subscribe to source to receive the manifestworks
 
-For agent part, the [`AgentInformerWatcherStore`](../work/store/informer.go) implements the `WorkClientWatcherStore`, it uses a given `ManifestWorkInformer`'s store as its store. The `ManifestWorkAgentClient` use this store to
+For agent part, the [`AgentInformerWatcherStore`](../clients/work/store/informer.go) implements the `WorkClientWatcherStore`, it uses a given `ManifestWorkInformer`'s store as its store. The `ManifestWorkAgentClient` use this store to
 - get/list manifestworks from the given informer store
 - add/update/delete the manifestworks with the given informer store
-- get a [`watcher`](../work/store/base.go) that is provided by this store
+- get a [`watcher`](../clients/work/store/base.go) that is provided by this store
 - handle the manifestworks received from source and send the received manifestworks to the watcher
 
 A developer need create a `ManifestWorkInformer` and pass the informer store to `AgentInformerWatcherStore` and start the informer before using the `ManifestWorkAgentClient` with `AgentInformerWatcherStore`.

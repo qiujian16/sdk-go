@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work"
+	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/work/store"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -11,8 +13,6 @@ import (
 	workv1 "open-cluster-management.io/api/work/v1"
 
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work"
-	"open-cluster-management.io/sdk-go/pkg/cloudevents/work/store"
 )
 
 func StartWorkAgent(ctx context.Context,
