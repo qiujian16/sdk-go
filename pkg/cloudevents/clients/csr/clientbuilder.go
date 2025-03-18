@@ -3,11 +3,11 @@ package csr
 import (
 	"context"
 	"fmt"
+	"k8s.io/client-go/tools/cache"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/csr/store"
+	"time"
 
 	certificatev1 "k8s.io/api/certificates/v1"
-	kubeclientset "k8s.io/client-go/kubernetes"
-	certificatev1client "k8s.io/client-go/kubernetes/typed/certificates/v1"
 	"k8s.io/klog/v2"
 
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/generic"
@@ -18,19 +18,18 @@ import (
 //
 // ClientHolder also implements the CertificateSigningRequestsGetter interface.
 type ClientHolder struct {
-	kubeClientSet kubeclientset.Interface
+	informer cache.SharedIndexInformer
+	client   *CSRAgentClient
 }
 
-var _ certificatev1client.CertificateSigningRequestsGetter = &ClientHolder{}
-
 // kubeClientInterface returns a kubeclientset Interface
-func (h *ClientHolder) kubeClientInterface() kubeclientset.Interface {
-	return h.kubeClientSet
+func (h *ClientHolder) Informer() cache.SharedIndexInformer {
+	return h.informer
 }
 
 // CertificateSigningRequests returns a certificatev1client Interface
-func (h *ClientHolder) CertificateSigningRequests() certificatev1client.CertificateSigningRequestInterface {
-	return h.kubeClientSet.CertificatesV1().CertificateSigningRequests()
+func (h *ClientHolder) Clients() *CSRAgentClient {
+	return h.client
 }
 
 // ClientHolderBuilder builds the ClientHolder with different configuration.
@@ -125,8 +124,6 @@ func (b *ClientHolderBuilder) NewAgentClientHolder(ctx context.Context) (*Client
 	cloudEventsClient.Subscribe(ctx, b.watcherStore.HandleReceivedCSR)
 
 	csrClient := NewCSRAgentClient(cloudEventsClient, b.watcherStore, b.clusterName)
-	certificateClient := &CertificateSigningRequestV1ClientWrapper{CertificateSigningRequestClient: csrClient}
-	certificateClientSet := &KubeClientSetWrapper{CertificateSigningRequestV1ClientWrapper: certificateClient}
 
 	// start a go routine to receive client reconnect signal
 	go func() {
@@ -149,8 +146,12 @@ func (b *ClientHolderBuilder) NewAgentClientHolder(ctx context.Context) (*Client
 		}
 	}()
 
+	csrInformer := cache.NewSharedIndexInformer(
+		csrClient, &certificatev1.CertificateSigningRequest{}, 30*time.Second,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+
 	if !b.resync {
-		return &ClientHolder{kubeClientSet: certificateClientSet}, nil
+		return &ClientHolder{client: csrClient, informer: csrInformer}, nil
 	}
 
 	// start a go routine to resync the csrs after this client's store is initiated
@@ -162,5 +163,5 @@ func (b *ClientHolderBuilder) NewAgentClientHolder(ctx context.Context) (*Client
 		}
 	}()
 
-	return &ClientHolder{kubeClientSet: certificateClientSet}, nil
+	return &ClientHolder{client: csrClient, informer: csrInformer}, nil
 }
