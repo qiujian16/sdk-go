@@ -35,7 +35,7 @@ func (h *ClientHolder) Clients() *CSRAgentClient {
 // ClientHolderBuilder builds the ClientHolder with different configuration.
 type ClientHolderBuilder struct {
 	config       any
-	watcherStore store.CSRClientWatcherStore
+	watcherStore *store.AgentInformerWatcherStore
 	codec        generic.Codec[*certificatev1.CertificateSigningRequest]
 	clusterName  string
 	clientID     string
@@ -77,7 +77,7 @@ func (b *ClientHolderBuilder) WithCodec(codec generic.Codec[*certificatev1.Certi
 
 // WithCSRClientWatcherStore set the CSRClientWatcherStore. The client will use this store to caches the csrs and
 // watch the csr events.
-func (b *ClientHolderBuilder) WithCSRClientWatcherStore(store store.CSRClientWatcherStore) *ClientHolderBuilder {
+func (b *ClientHolderBuilder) WithCSRClientWatcherStore(store *store.AgentInformerWatcherStore) *ClientHolderBuilder {
 	b.watcherStore = store
 	return b
 }
@@ -150,6 +150,8 @@ func (b *ClientHolderBuilder) NewAgentClientHolder(ctx context.Context) (*Client
 		csrClient, &certificatev1.CertificateSigningRequest{}, 30*time.Second,
 		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 
+	b.watcherStore.SetInformer(csrInformer)
+	
 	if !b.resync {
 		return &ClientHolder{client: csrClient, informer: csrInformer}, nil
 	}
