@@ -2,8 +2,6 @@ package lease
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +11,7 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/coordination/v1"
 	leasev1client "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	"k8s.io/klog/v2"
+
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/common"
 	cloudeventserrors "open-cluster-management.io/sdk-go/pkg/cloudevents/clients/errors"
 	"open-cluster-management.io/sdk-go/pkg/cloudevents/clients/options"
@@ -40,35 +39,6 @@ func (l LeaseClient) Update(ctx context.Context, lease *coordinationv1.Lease, op
 
 	if err := l.cloudEventsClient.Publish(ctx, eventType, lease); err != nil {
 		return nil, cloudeventserrors.ToStatusError(coordinationv1.Resource("leases"), lease.Name, err)
-	}
-
-	// Fetch the latest cluster from the store and verify the resource version to avoid updating the store
-	// with outdated cluster. Return a conflict error if the resource version is outdated.
-	// Due to the lack of read-modify-write guarantees in the store, race conditions may occur between
-	// this update operation and one from the agent informer after receiving the event from the source.
-	lastLease, exists, err := l.watcherStore.Get(lease.Namespace, lease.Name)
-	if err != nil {
-		return nil, errors.NewInternalError(err)
-	}
-	if !exists {
-		return nil, errors.NewNotFound(coordinationv1.Resource("leases"), lease.Name)
-	}
-	lastResourceVersion, err := strconv.ParseInt(lastLease.GetResourceVersion(), 10, 64)
-	if err != nil {
-		return nil, errors.NewInternalError(err)
-	}
-	newResourceVersion, err := strconv.ParseInt(lease.GetResourceVersion(), 10, 64)
-	if err != nil {
-		return nil, errors.NewInternalError(err)
-	}
-	// ensure the resource version of the cluster is not outdated
-	if newResourceVersion < lastResourceVersion {
-		// It's safe to return a conflict error here, even if the status update event
-		// has already been sent. The source may reject the update due to an outdated resource version.
-		return nil, errors.NewConflict(coordinationv1.Resource("leases"), lease.Name, fmt.Errorf("the resource version of the cluster is outdated"))
-	}
-	if err := l.watcherStore.Update(lease.DeepCopy()); err != nil {
-		return nil, errors.NewInternalError(err)
 	}
 
 	return lease, nil

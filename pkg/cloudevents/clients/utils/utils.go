@@ -241,3 +241,15 @@ func EnsureResourceFinalizer(finalizers []string) []string {
 
 	return finalizers
 }
+
+func IsStatusPatch(subresources []string) (bool, error) {
+	if len(subresources) == 0 {
+		return false, fmt.Errorf("subresources \"status\" is required")
+	}
+
+	if len(subresources) == 1 && subresources[0] == "status" {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("unsupported subresources %v", subresources)
+}
