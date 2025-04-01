@@ -127,8 +127,9 @@ func (c *ManagedClusterAddOnClient) Patch(
 
 	newAddon := patchedAddon.DeepCopy()
 
-	if _, err = utils.IsStatusPatch(subresources); err != nil {
-		return nil, errors.NewGenericServerResponse(http.StatusMethodNotAllowed, "patch", common.ManagedClusterAddOnGR, name, err.Error(), 0, false)
+	if !utils.IsStatusPatch(subresources) {
+		msg := "subresources \"status\" is required"
+		return nil, errors.NewGenericServerResponse(http.StatusMethodNotAllowed, "patch", common.ManagedClusterAddOnGR, name, msg, 0, false)
 	}
 
 	// publish the status update event to source, source will check the resource version

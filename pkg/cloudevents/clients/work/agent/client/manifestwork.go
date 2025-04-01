@@ -158,14 +158,7 @@ func (c *ManifestWorkAgentClient) Patch(ctx context.Context, name string, pt kub
 
 	newWork := patchedWork.DeepCopy()
 
-	statusUpdated, err := utils.IsStatusPatch(subresources)
-	if err != nil {
-		returnErr := errors.NewGenericServerResponse(http.StatusMethodNotAllowed, "patch", common.ManifestWorkGR, name, err.Error(), 0, false)
-		generic.IncreaseWorkProcessedCounter("patch", string(returnErr.ErrStatus.Reason))
-		return nil, returnErr
-	}
-
-	if statusUpdated {
+	if utils.IsStatusPatch(subresources) {
 		// avoid race conditions among the agent's go routines
 		c.Lock()
 		defer c.Unlock()
@@ -222,6 +215,13 @@ func (c *ManifestWorkAgentClient) Patch(ctx context.Context, name string, pt kub
 
 		generic.IncreaseWorkProcessedCounter("patch", metav1.StatusSuccess)
 		return newWork, nil
+	}
+
+	if len(subresources) != 0 {
+		msg := fmt.Sprintf("unsupported subresources %v", subresources)
+		returnErr := errors.NewGenericServerResponse(http.StatusMethodNotAllowed, "patch", common.ManifestWorkGR, name, msg, 0, false)
+		generic.IncreaseWorkProcessedCounter("patch", string(returnErr.ErrStatus.Reason))
+		return nil, returnErr
 	}
 
 	// the finalizers of a deleting manifestwork are removed, marking the manifestwork status to deleted and sending

@@ -64,14 +64,11 @@ func TestPatch(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
 			watcherStore := store.NewAgentInformerWatcherStore[*addonapiv1alpha1.ManagedClusterAddOn]()
 
 			ceClientOpt := fake.NewAgentOptions(gochan.New(), nil, c.clusterName, c.clusterName+"agent")
 			ceClient, err := generic.NewCloudEventAgentClient(
-				ctx,
+				context.Background(),
 				ceClientOpt,
 				store.NewAgentWatcherStoreLister(watcherStore),
 				statushash.StatusHash,
@@ -90,10 +87,9 @@ func TestPatch(t *testing.T) {
 				t.Error(err)
 			}
 			watcherStore.SetInformer(informer)
-			go addonInformerFactory.Start(ctx.Done())
 
 			if _, err = addonClientSet.AddonV1alpha1().ManagedClusterAddOns(c.clusterName).Patch(
-				ctx,
+				context.Background(),
 				c.addon.Name,
 				types.MergePatchType,
 				c.patch,

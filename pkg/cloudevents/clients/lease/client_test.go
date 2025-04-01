@@ -83,7 +83,9 @@ func TestGet(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			leaseWatchStore := store.NewSimpleStore[*coordv1.Lease]()
 			for _, lease := range c.leases {
-				leaseWatchStore.Add(lease)
+				if err := leaseWatchStore.Add(lease); err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			ceClient, err := generic.NewCloudEventAgentClient(

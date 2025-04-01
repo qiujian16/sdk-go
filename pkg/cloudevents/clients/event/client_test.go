@@ -92,7 +92,9 @@ func TestPatch(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			watchStore := store.NewSimpleStore[*eventsv1.Event]()
-			watchStore.Add(c.event)
+			if err := watchStore.Add(c.event); err != nil {
+				t.Fatal(err)
+			}
 
 			ceClient, err := generic.NewCloudEventAgentClient(
 				context.Background(),
