@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
@@ -25,8 +26,8 @@ import (
 )
 
 // Patch applies the patch to a resource with the patch type.
-func Patch[T generic.ResourceObject](patchType types.PatchType, work T, patchData []byte) (resource T, err error) {
-	workData, err := json.Marshal(work)
+func Patch[T generic.ResourceObject](patchType types.PatchType, original T, patchData []byte) (resource T, err error) {
+	originalData, err := json.Marshal(original)
 	if err != nil {
 		return resource, err
 	}
@@ -39,13 +40,17 @@ func Patch[T generic.ResourceObject](patchType types.PatchType, work T, patchDat
 		if err != nil {
 			return resource, err
 		}
-		patchedData, err = patchObj.Apply(workData)
+		patchedData, err = patchObj.Apply(originalData)
 		if err != nil {
 			return resource, err
 		}
-
 	case types.MergePatchType:
-		patchedData, err = jsonpatch.MergePatch(workData, patchData)
+		patchedData, err = jsonpatch.MergePatch(originalData, patchData)
+		if err != nil {
+			return resource, err
+		}
+	case types.StrategicMergePatchType:
+		patchedData, err = strategicpatch.StrategicMergePatch(originalData, patchData, original)
 		if err != nil {
 			return resource, err
 		}
@@ -53,12 +58,12 @@ func Patch[T generic.ResourceObject](patchType types.PatchType, work T, patchDat
 		return resource, fmt.Errorf("unsupported patch type: %s", patchType)
 	}
 
-	patchedWork := new(T)
-	if err := json.Unmarshal(patchedData, patchedWork); err != nil {
+	patchedResource := new(T)
+	if err := json.Unmarshal(patchedData, patchedResource); err != nil {
 		return resource, err
 	}
 
-	return *patchedWork, nil
+	return *patchedResource, nil
 }
 
 // ListResourcesWithOptions retrieves the resources from store which matches the options.
